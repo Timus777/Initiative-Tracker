@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Мастер Инициативы | Сохранение в файл | Герои vs Монстры</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: system-ui, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(145deg, #1a2a3a 0%, #0f1a24 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .initiative-tracker {
+            max-width: 1400px;
+            width: 100%;
+            background: rgba(30, 35, 45, 0.92);
+            backdrop-filter: blur(2px);
+            border-radius: 2rem;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 215, 150, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #1e2a2f;
+            padding: 1.2rem 1.8rem;
+            border-bottom: 3px solid #e0a82b;
+            text-align: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.9rem;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, #f9e0a0, #d4a017);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 2px 3px rgba(0,0,0,0.2);
+        }
+
+        .header p {
+            margin: 0.5rem 0 0;
+            color: #bbccdd;
+            font-size: 0.85rem;
+        }
+
+        .add-panel {
+            background: #232d36;
+            padding: 1.2rem 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: flex-end;
+            border-bottom: 1px solid #3a4653;
+        }
+
+        .input-group {
+            flex: 1;
+            min-width: 120px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+            color: #ccb47c;
+            margin-bottom: 4px;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            background: #10161c;
+            border: 1px solid #3e4d5a;
+            padding: 10px 12px;
+            border-radius: 18px;
+            font-size: 1rem;
+            color: #f0f3f8;
+            transition: 0.2s;
+        }
+
+        .input-group select {
+            cursor: pointer;
+        }
+
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #e0a82b;
+            box-shadow: 0 0 0 2px rgba(224, 168, 43, 0.3);
+        }
+
+        .add-btn {
+            background: #d4a017;
+            border: none;
+            padding: 10px 22px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1rem;
+            color: #1e2a2a;
+            cursor: pointer;
+            transition: 0.15s;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
+
+        .add-btn:hover {
+            background: #e6b42c;
+            transform: scale(0.97);
+        }
+
+        .modifier-bar {
+            background: #1c262f;
+            padding: 0.8rem 1.5rem;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            border-bottom: 1px solid #2f3b46;
+        }
+
+        .global-mod {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            background: #111a20;
+            padding: 5px 12px;
+            border-radius: 48px;
+        }
+
+        .global-mod span {
+            color: #e6c88a;
+            font-weight: bold;
+            font-size: 0.8rem;
+        }
+
+        .mod-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .mod-btn {
+            background: #2d3e4b;
+            border: none;
+            font-size: 1.2rem;
+            font-weight: bold;
+            width: 34px;
+            height: 34px;
+            border-radius: 30px;
+            color: white;
+            cursor: pointer;
+        }
+
+        .mod-btn.danger {
+            background: #8b3c2c;
+        }
+
+        .info-note {
+            font-size: 0.7rem;
+            color: #90a0ae;
+        }
+
+        .initiative-list {
+            padding: 1rem 1.2rem 1.5rem;
+            max-height: 55vh;
+            overflow-y: auto;
+        }
+
+        /* Сетка без наложений */
+        .list-header {
+            display: grid;
+            grid-template-columns: 55px minmax(170px, 2.2fr) 95px 120px 70px 140px;
+            background: #151e25;
+            padding: 12px 16px;
+            border-radius: 40px;
+            margin-bottom: 12px;
+            font-weight: bold;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            color: #e6d5b3;
+            letter-spacing: 0.5px;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .initiative-row {
+            display: grid;
+            grid-template-columns: 55px minmax(170px, 2.2fr) 95px 120px 70px 140px;
+            align-items: center;
+            background: #1f2a32;
+            margin-bottom: 8px;
+            padding: 8px 16px;
+            border-radius: 60px;
+            transition: all 0.1s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            gap: 12px;
+        }
+
+        .initiative-row.highlight {
+            background: #2e3f2b;
+            border-left: 5px solid #f5c542;
+            transform: scale(1.01);
+        }
+
+        .init-number {
+            font-weight: bold;
+            font-size: 1.2rem;
+            text-align: center;
+            color: #f3cd81;
+        }
+
+        .init-name {
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: nowrap;
+            overflow: hidden;
+            min-width: 0;
+        }
+        .name-text {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            color: #f2e8cf;
+        }
+        .init-name:hover .name-text {
+            overflow: visible;
+            white-space: normal;
+            background: #1f2a32;
+            position: relative;
+            z-index: 10;
+            word-break: break-word;
+        }
+
+        .hero-badge {
+            background: #2c6e5c;
+            padding: 2px 10px;
+            border-radius: 30px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            color: #d4f1e6;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .monster-badge {
+            background: #8b3c2c;
+            padding: 2px 10px;
+            border-radius: 30px;
+            font-size: 0.65rem;
+            font-weight: bold;
+            color: #ffcdb0;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .init-value {
+            font-family: monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-align: center;
+            background: #0e171f;
+            padding: 5px 8px;
+            border-radius: 28px;
+            color: #f2c94c;
+            white-space: nowrap;
+        }
+
+        .modify-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+
+        .modify-group button {
+            background: #324b58;
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 36px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.05s linear;
+        }
+
+        .modify-group button:active {
+            transform: scale(0.92);
+        }
+
+        .delete-btn {
+            background: #6d3c2c;
+            border: none;
+            width: 38px;
+            height: 38px;
+            border-radius: 38px;
+            font-size: 1rem;
+            cursor: pointer;
+            color: white;
+            transition: 0.05s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .extra-counter {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #101b22;
+            padding: 4px 10px;
+            border-radius: 48px;
+            justify-content: space-between;
+        }
+        .extra-value {
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 1.1rem;
+            color: #bbddff;
+            min-width: 45px;
+            text-align: center;
+            background: #00000055;
+            padding: 2px 6px;
+            border-radius: 20px;
+        }
+        .extra-btn {
+            background: #2c4f5e;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 28px;
+            font-weight: bold;
+            font-size: 1rem;
+            color: white;
+            cursor: pointer;
+        }
+        .extra-btn:active {
+            transform: scale(0.9);
+        }
+
+        .empty-list {
+            text-align: center;
+            padding: 2rem;
+            color: #859dad;
+            font-style: italic;
+        }
+
+        .footer-actions {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.8rem 1.5rem 1.5rem;
+            gap: 12px;
+            flex-wrap: wrap;
+            border-top: 1px solid #2f3b46;
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .file-btn {
+            background: #2c4f5e;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 30px;
+            color: #e6e2c3;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        .file-btn:hover {
+            background: #3e6a7c;
+        }
+        .clear-btn, .sort-refresh {
+            background: #2c2a2f;
+            border: 1px solid #6e5a48;
+            padding: 8px 18px;
+            border-radius: 30px;
+            color: #ddbb88;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .sort-refresh {
+            background: #2a4b3c;
+        }
+        .import-label {
+            background: #3a5a6e;
+            display: inline-block;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #e6e2c3;
+        }
+        #fileInput {
+            display: none;
+        }
+
+        @media (max-width: 1100px) {
+            .list-header, .initiative-row {
+                grid-template-columns: 50px minmax(150px, 2fr) 85px 105px 65px 130px;
+                gap: 10px;
+                padding: 8px 12px;
+            }
+            .modify-group button {
+                width: 32px;
+                height: 32px;
+                font-size: 1rem;
+            }
+            .delete-btn {
+                width: 34px;
+                height: 34px;
+            }
+        }
+
+        @media (max-width: 950px) {
+            .list-header, .initiative-row {
+                grid-template-columns: 45px minmax(130px, 1.8fr) 75px 95px 60px 120px;
+                gap: 8px;
+                font-size: 0.7rem;
+            }
+            .extra-counter {
+                gap: 5px;
+                padding: 2px 6px;
+            }
+            .extra-value {
+                min-width: 38px;
+                font-size: 0.95rem;
+            }
+            .extra-btn {
+                width: 24px;
+                height: 24px;
+                font-size: 0.8rem;
+            }
+        }
+
+        @media (max-width: 800px) {
+            .list-header, .initiative-row {
+                grid-template-columns: 40px minmax(110px, 1.5fr) 70px 85px 50px 105px;
+                gap: 6px;
+                padding: 6px 10px;
+            }
+            .modify-group button {
+                width: 28px;
+                height: 28px;
+                font-size: 0.85rem;
+            }
+            .delete-btn {
+                width: 30px;
+                height: 30px;
+            }
+        }
+    </style>
+</head>
+<body>
+<div class="initiative-tracker" id="app">
+    <div class="header">
+        <h1>⚔️ ПОРЯДОК ХОДОВ ⚔️</h1>
+        <p>Герои 🛡️ и Монстры 👹 | Равная инициатива → монстры первыми | 💾 Сохранение в файл</p>
+    </div>
+
+    <div class="add-panel">
+        <div class="input-group">
+            <label>👥 Имя</label>
+            <input type="text" id="charName" placeholder="Арагорн / Гоблин-шаман" autocomplete="off">
+        </div>
+        <div class="input-group">
+            <label>🎲 Инициатива</label>
+            <input type="number" id="charInitiative" placeholder="0" value="10" step="1">
+        </div>
+        <div class="input-group">
+            <label>🏷️ Тип</label>
+            <select id="charType">
+                <option value="hero">🛡️ Герой</option>
+                <option value="monster">👹 Монстр / Враг</option>
+            </select>
+        </div>
+        <button class="add-btn" id="addButton">➕ Добавить</button>
+    </div>
+
+    <div class="modifier-bar">
+        <div class="global-mod">
+            <span>✨ Глобальный мод инициативы:</span>
+            <div class="mod-buttons">
+                <button class="mod-btn" id="globalMinusBtn">-1</button>
+                <button class="mod-btn" id="globalPlusBtn">+1</button>
+                <button class="mod-btn danger" id="globalResetBtn" title="Пересортировать">⟳</button>
+            </div>
+        </div>
+        <div class="info-note">
+            ⚡ У каждого свои +1/−1 к инициативе. <strong style="color:#e0a82b;">При равной инициативе МОНСТРЫ ходят раньше</strong>. <br>
+            📊 Дополнительный счётчик (справа) — меняется кнопками +/-.
+        </div>
+    </div>
+
+    <div class="initiative-list">
+        <div class="list-header">
+            <div style="text-align: center;">#</div>
+            <div>Участник</div>
+            <div style="text-align: center;">Инициатива</div>
+            <div style="text-align: center;">Изменить</div>
+            <div style="text-align: center;">🗑️</div>
+            <div style="text-align: center;">Доп. счётчик</div>
+        </div>
+        <div id="listContainer"></div>
+    </div>
+
+    <div class="footer-actions">
+        <div class="file-actions">
+            <button class="file-btn" id="saveToFileBtn">💾 Сохранить в файл</button>
+            <label for="fileInput" class="import-label">📂 Загрузить из файла</label>
+            <input type="file" id="fileInput" accept=".json">
+            <button class="clear-btn" id="clearAllBtn">🧹 Очистить всё</button>
+            <button class="sort-refresh" id="forceSortBtn">🔄 Пересортировать</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Участник: { id, name, initiative, type, extraCounter }
+    let participants = [];
+
+    function generateId() {
+        return Date.now() + '-' + Math.random().toString(36).substring(2, 10);
+    }
+
+    // Сортировка: по убыванию initiative, при равных — монстры раньше
+    function customSort() {
+        participants.sort((a, b) => {
+            if (a.initiative !== b.initiative) {
+                return b.initiative - a.initiative;
+            } else {
+                const aPriority = a.type === 'monster' ? 1 : 0;
+                const bPriority = b.type === 'monster' ? 1 : 0;
+                return bPriority - aPriority;
+            }
+        });
+    }
+
+    function saveToLocalStorage() {
+        localStorage.setItem('initiativeTrackerFileSave', JSON.stringify(participants));
+    }
+
+    function loadFromLocalStorage() {
+        const saved = localStorage.getItem('initiativeTrackerFileSave');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (Array.isArray(parsed)) {
+                    participants = parsed;
+                    participants = participants.map(p => {
+                        if (p.extraCounter === undefined) p.extraCounter = 0;
+                        if (!p.type) p.type = 'hero';
+                        return p;
+                    });
+                }
+            } catch(e) { console.warn(e); }
+        }
+        if (participants.length === 0) {
+            participants = [
+                { id: generateId(), name: "Лунный эльф", initiative: 18, type: "hero", extraCounter: 12 },
+                { id: generateId(), name: "Тролль-берсерк", initiative: 16, type: "monster", extraCounter: 34 },
+                { id: generateId(), name: "Жрец света", initiative: 20, type: "hero", extraCounter: 8 },
+                { id: generateId(), name: "Гоблин-шаман", initiative: 20, type: "monster", extraCounter: 5 },
+                { id: generateId(), name: "Паладин Справедливости", initiative: 14, type: "hero", extraCounter: 0 },
+                { id: generateId(), name: "Дракончик", initiative: 22, type: "monster", extraCounter: 27 }
+            ];
+            customSort();
+        } else {
+            customSort();
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return str.replace(/[&<>]/g, function(m) {
+            if (m === '&') return '&amp;';
+            if (m === '<') return '&lt;';
+            if (m === '>') return '&gt;';
+            return m;
+        });
+    }
+
+    function render() {
+        const container = document.getElementById('listContainer');
+        if (!container) return;
+
+        if (participants.length === 0) {
+            container.innerHTML = `<div class="empty-list">✨ Нет участников. Добавьте героев и врагов — определите порядок ходов ✨</div>`;
+            return;
+        }
+
+        let html = '';
+        participants.forEach((p, idx) => {
+            const number = idx + 1;
+            const highlightClass = idx === 0 ? 'highlight' : '';
+            const typeLabel = p.type === 'hero' ? '🛡️ Герой' : '👹 Монстр';
+            const badgeClass = p.type === 'hero' ? 'hero-badge' : 'monster-badge';
+            const safeName = escapeHtml(p.name);
+            const extraVal = (p.extraCounter !== undefined && !isNaN(p.extraCounter)) ? p.extraCounter : 0;
+            
+            html += `
+                <div class="initiative-row ${highlightClass}" data-id="${p.id}">
+                    <div class="init-number">${number}</div>
+                    <div class="init-name">
+                        <span class="name-text" title="${safeName}">${safeName}</span>
+                        <span class="${badgeClass}">${typeLabel}</span>
+                    </div>
+                    <div class="init-value">${p.initiative}</div>
+                    <div class="modify-group">
+                        <button class="mod-increment" data-id="${p.id}" data-delta="1">+1</button>
+                        <button class="mod-decrement" data-id="${p.id}" data-delta="-1">−1</button>
+                    </div>
+                    <div style="display: flex; justify-content: center;">
+                        <button class="delete-btn" data-id="${p.id}" title="Удалить">✖</button>
+                    </div>
+                    <div class="extra-counter">
+                        <button class="extra-minus" data-id="${p.id}" title="-1 к счётчику">−1</button>
+                        <span class="extra-value" id="extra-val-${p.id}">${extraVal}</span>
+                        <button class="extra-plus" data-id="${p.id}" title="+1 к счётчику">+1</button>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+
+        document.querySelectorAll('.mod-increment, .mod-decrement').forEach(btn => {
+            btn.removeEventListener('click', handleModClick);
+            btn.addEventListener('click', handleModClick);
+        });
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.removeEventListener('click', handleDeleteClick);
+            btn.addEventListener('click', handleDeleteClick);
+        });
+        document.querySelectorAll('.extra-plus, .extra-minus').forEach(btn => {
+            btn.removeEventListener('click', handleExtraClick);
+            btn.addEventListener('click', handleExtraClick);
+        });
+    }
+
+    function handleModClick(event) {
+        const btn = event.currentTarget;
+        const id = btn.getAttribute('data-id');
+        const delta = parseInt(btn.getAttribute('data-delta'), 10);
+        const participant = participants.find(p => p.id === id);
+        if (participant) {
+            participant.initiative += delta;
+            customSort();
+            render();
+            saveToLocalStorage();
+        }
+    }
+
+    function handleDeleteClick(event) {
+        const btn = event.currentTarget;
+        const id = btn.getAttribute('data-id');
+        participants = participants.filter(p => p.id !== id);
+        customSort();
+        render();
+        saveToLocalStorage();
+    }
+
+    function handleExtraClick(event) {
+        const btn = event.currentTarget;
+        const id = btn.getAttribute('data-id');
+        const isPlus = btn.classList.contains('extra-plus');
+        const delta = isPlus ? 1 : -1;
+        const participant = participants.find(p => p.id === id);
+        if (participant) {
+            participant.extraCounter = (participant.extraCounter ?? 0) + delta;
+            const spanElem = document.getElementById(`extra-val-${id}`);
+            if (spanElem) spanElem.innerText = participant.extraCounter;
+            saveToLocalStorage();
+        }
+    }
+
+    function addParticipant(name, initiativeValue, type) {
+        const trimmed = name.trim();
+        if (trimmed === "") {
+            alert("Введите имя персонажа или монстра!");
+            return false;
+        }
+        let init = Number(initiativeValue);
+        if (isNaN(init)) init = 0;
+        init = Math.floor(init);
+        
+        participants.push({
+            id: generateId(),
+            name: trimmed,
+            initiative: init,
+            type: type,
+            extraCounter: 0
+        });
+        customSort();
+        render();
+        saveToLocalStorage();
+        return true;
+    }
+
+    function globalModify(delta) {
+        if (participants.length === 0) return;
+        for (let p of participants) p.initiative += delta;
+        customSort();
+        render();
+        saveToLocalStorage();
+    }
+
+    function clearAll() {
+        if (participants.length > 0 && confirm("⚠️ Удалить всех участников?")) {
+            participants = [];
+            render();
+            saveToLocalStorage();
+        }
+    }
+
+    function forceResort() {
+        customSort();
+        render();
+        saveToLocalStorage();
+    }
+
+    // ========== СОХРАНЕНИЕ В ФАЙЛ ==========
+    function saveToFile() {
+        if (participants.length === 0) {
+            alert("Нет данных для сохранения. Добавьте хотя бы одного участника.");
+            return;
+        }
+        const dataToSave = JSON.stringify(participants, null, 2);
+        const blob = new Blob([dataToSave], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const now = new Date();
+        const filename = `initiative_${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}_${now.getHours()}-${now.getMinutes()}.json`;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+
+    // ========== ЗАГРУЗКА ИЗ ФАЙЛА ==========
+    function loadFromFile(file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const loadedData = JSON.parse(e.target.result);
+                if (Array.isArray(loadedData)) {
+                    // Проверка и нормализация
+                    const validData = loadedData.filter(item => item.name && typeof item.initiative === 'number').map(item => ({
+                        id: item.id || generateId(),
+                        name: item.name,
+                        initiative: item.initiative,
+                        type: (item.type === 'hero' || item.type === 'monster') ? item.type : 'hero',
+                        extraCounter: (typeof item.extraCounter === 'number') ? item.extraCounter : 0
+                    }));
+                    if (validData.length > 0) {
+                        participants = validData;
+                        customSort();
+                        render();
+                        saveToLocalStorage();
+                        alert(`Загружено ${validData.length} участников.`);
+                    } else {
+                        alert("Файл не содержит корректных данных об участниках.");
+                    }
+                } else {
+                    alert("Неверный формат файла.");
+                }
+            } catch(err) {
+                alert("Ошибка при чтении файла: " + err.message);
+            }
+        };
+        reader.onerror = () => alert("Не удалось прочитать файл.");
+        reader.readAsText(file);
+    }
+
+    // Инициализация
+    document.addEventListener('DOMContentLoaded', () => {
+        loadFromLocalStorage();
+        render();
+
+        const addBtn = document.getElementById('addButton');
+        const nameInput = document.getElementById('charName');
+        const initInput = document.getElementById('charInitiative');
+        const typeSelect = document.getElementById('charType');
+        
+        addBtn.addEventListener('click', () => {
+            addParticipant(nameInput.value, initInput.value, typeSelect.value);
+            nameInput.value = '';
+            nameInput.focus();
+        });
+        
+        const enterHandler = (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addBtn.click();
+            }
+        };
+        nameInput.addEventListener('keypress', enterHandler);
+        initInput.addEventListener('keypress', enterHandler);
+        
+        document.getElementById('globalMinusBtn').addEventListener('click', () => globalModify(-1));
+        document.getElementById('globalPlusBtn').addEventListener('click', () => globalModify(1));
+        document.getElementById('globalResetBtn').addEventListener('click', forceResort);
+        document.getElementById('clearAllBtn').addEventListener('click', clearAll);
+        document.getElementById('forceSortBtn').addEventListener('click', forceResort);
+        
+        // Файловые операции
+        document.getElementById('saveToFileBtn').addEventListener('click', saveToFile);
+        const fileInput = document.getElementById('fileInput');
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files && e.target.files[0]) {
+                loadFromFile(e.target.files[0]);
+                fileInput.value = ''; // чтобы можно было загрузить тот же файл снова
+            }
+        });
+    });
+</script>
+</body>
+</html>
